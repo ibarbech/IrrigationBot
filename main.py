@@ -8,6 +8,9 @@ import json
 import numpy as np
 from datetime import date, timedelta,datetime
 import matplotlib.pyplot as plt
+import threading
+import cPickle as pickle
+import time
 
 # requests.get("http://159.49.112.87/")
 
@@ -17,23 +20,31 @@ TOKEN = '541416193:AAHpVF1yGc8UiiXz0l-iANxWSgOqGpHPR90'
 bot = telebot.TeleBot(TOKEN)
 
 markup = telebot.types.ReplyKeyboardMarkup(row_width=2)
-functions = ['/GetTemperatureStatus','/DectiveKeyboardOptions','/GetMoisureStatus','/ActiveKeyboardOptions','/GetMoisureStatus','/ProcessAllData', '/GetGraphics']
-# for x in functions:
-#     itembtn1 = telebot.types.KeyboardButton(x)
-#     markup.add(itembtn1)
-itembtn1 = telebot.types.KeyboardButton('/GetMoisureStatusa')
+# functions = ['/GetTemperatureStatus','/DectiveKeyboardOptions','/GetMoisureStatus','/ActiveKeyboardOptions','/GetMoisureStatus','/ProcessAllData', '/GetGraphics']
+functions = ['/DectiveKeyboardOptions','/ActiveKeyboardOptions','/ProcessAllData', '/GetGraphics']
+
+
+# itembtn1 = telebot.types.KeyboardButton('/GetMoisureStatusa')
 itembtn2 = telebot.types.KeyboardButton('/DectiveKeyboardOptions')
-itembtn3 = telebot.types.KeyboardButton('/GetTemperatureStatus')
-itembtn4 = telebot.types.KeyboardButton('/GetMoisureStatus')
+# itembtn3 = telebot.types.KeyboardButton('/GetTemperatureStatus')
+# itembtn4 = telebot.types.KeyboardButton('/GetMoisureStatus')
 itembtn5 = telebot.types.KeyboardButton('/ProcessAllData')
 itembtn6 = telebot.types.KeyboardButton('/GetGraphics')
-
-markup.add(itembtn1, itembtn2, itembtn3, itembtn4, itembtn5, itembtn6)
+markup.add(itembtn2, itembtn5, itembtn6)
+# markup.add(itembtn1, itembtn2, itembtn3, itembtn4, itembtn5, itembtn6)
 markupHide = telebot.types.ForceReply(selective=False)
 
 init_text = "Hi.\n It's the functions that you can use."
 for x in functions:
-    init_text += "\n\t"+x
+    init_text += "\n"+"\t"*4+x
+
+subcribe = {}
+try:
+	with open("idchats.txt", 'rb') as fichero:
+	    subcribe = pickle.load(fichero)
+except Exception as e:
+	with open("idchats.txt", 'wb') as fichero:
+		pickle.dump(subcribe, fichero,0)
 
 Tipo2Text ={ "1": "Temperatura ambiente",
              "2": "Humedad ambiente",
@@ -107,14 +118,14 @@ def processDataAndSendGraphics(data, message):
 
 def processData():
     # Get ids sensors
-    sensors = json.loads(requests.get("http://158.49.112.87:8080/").text)
+    sensors = json.loads(requests.get("http://158.49.112.87:8080/", timeout=0.1).text)
     # sensors = [{'id':1}, {"id":2}, {"id":3}]
     average = {}
     lastValue = {}
     for sensor in sensors:
         acum = 0
         if sensor["id"] in [1, 2, 3, 4]:    # Procesar Sensores Jardin
-            data = json.loads(requests.get("http://158.49.112.87:8080/" + str(sensor["id"])).text)
+            data = json.loads(requests.get("http://158.49.112.87:8080/" + str(sensor["id"]), timeout=0.1).text)
             for d in data:
                 acum += d["valor"]
             average[sensor["id"]] = acum/len(data)
@@ -134,6 +145,10 @@ def processData():
 
 @bot.message_handler(commands=['start','help'])
 def handle_start_help(message):
+    subcribe[message.from_user.id] = True
+    print subcribe
+    with open("idchats.txt", 'wb') as fichero:
+        pickle.dump(subcribe, fichero, 0)
     bot.reply_to(message, init_text)
 
 
@@ -154,10 +169,10 @@ def handle_start_help(message):
 @bot.message_handler(commands=['GetGraphics'])
 def handle_start_help(message):
     # Get ids sensors
-    sensors = json.loads(requests.get("http://158.49.112.87:8080/").text)
+    sensors = json.loads(requests.get("http://158.49.112.87:8080/", timeout=0.1).text)
     for sensor in sensors:
         if sensor["id"] in [1, 2, 3, 4]:  # Procesar Sensores Jardin
-            data = json.loads(requests.get("http://158.49.112.87:8080/" + str(sensor["id"])).text)
+            data = json.loads(requests.get("http://158.49.112.87:8080/" + str(sensor["id"]), timeout=0.1).text)
             processDataAndSendGraphics(data, message)
         else:  # Procesar AEMET
             pass
@@ -176,6 +191,44 @@ def handle_start_help(message):
 
 @bot.message_handler(func=lambda message: True)
 def echo_all(message):
-	bot.reply_to(message, "I don't know what you mean.\n" + init_text)
+    bot.reply_to(message, "I don't know what you mean.\n" + init_text)
 
-bot.polling()
+
+
+def theSystemHasErrors():
+    print "comprobando Sistema"
+    try:
+        sensors = json.loads(requests.get("http://158.49.112.87:8080/", timeout=0.1).text)
+    except Exception as e:
+        for id, s in subcribe.iteritems():
+            bot.send_message(id, "Error Servidor Api Caida")
+        print e
+        return
+    for sensor in sensors:
+        if sensor["id"] in [1, 2, 3, 4]:  # Procesar Sensores Jardin
+            data = json.loads(requests.get("http://158.49.112.87:8080/" + str(sensor["id"]), timeout=0.1).text)
+            list_days=[]
+            for d in data:
+                f = d['fecha'].split(",")[1].replace(" GMT","")[1:]
+                d = datetime.strptime(f, "%d %b %Y %H:%M:%S")
+                list_days.append(d)
+            last_date = max(list_days)
+            now = datetime.now()
+            if now + timedelta(minutes = -15)>last_date:
+                for id, s in subcribe.iteritems():
+                    bot.send_message(id, "Error en el sensor: " + str(data[0]['id']))
+        else:  # Procesar AEMET
+            pass
+
+
+def worker(bot):
+    bot.polling()
+
+t = threading.Thread(target=worker, args=(bot,))
+t.start()
+
+# bot.polling()
+if __name__ == '__main__':
+    while True:
+        theSystemHasErrors()
+        time.sleep(3*60)
