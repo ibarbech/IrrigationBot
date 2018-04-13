@@ -1,0 +1,12 @@
+[[source]]
+
+
+[packages]
+
+telebot = "*"
+requests = "*"
+os = "*"
+
+[requires]
+
+python_version = "3.6"
