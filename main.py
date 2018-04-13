@@ -122,14 +122,28 @@ def processDataAndSendGraphics(data, message):
 
 def processData():
     # Get ids sensors
-    sensors = json.loads(requests.get("http://158.49.112.87:8080/", timeout=1).text)
+    try:
+        sensors = json.loads(requests.get("http://158.49.112.87:8080/", timeout=1).text)
+    except Exception as e:
+        for id, s in subcribe.iteritems():
+            if s is True:
+                bot.send_message(id, "Error Servidor Api Caida")
+        print e
+        return
     # sensors = [{'id':1}, {"id":2}, {"id":3}]
     average = {}
     lastValue = {}
     for sensor in sensors:
         acum = 0
         if sensor["id"] in [1, 2, 3, 4]:    # Procesar Sensores Jardin
-            data = json.loads(requests.get("http://158.49.112.87:8080/" + str(sensor["id"]), timeout=1).text)
+            try:
+                data = json.loads(requests.get("http://158.49.112.87:8080/" + str(sensor["id"]), timeout=1).text)
+            except Exception as e:
+                for id, s in subcribe.iteritems():
+                    if s is True:
+                        bot.send_message(id, "Error Servidor Api Caida")
+                print e
+                return
             for d in data:
                 acum += d["valor"]
             average[sensor["id"]] = acum/len(data)
@@ -174,10 +188,24 @@ def handle_start_help(message):
 @bot.message_handler(commands=['GetGraphics'])
 def handle_start_help(message):
     # Get ids sensors
-    sensors = json.loads(requests.get("http://158.49.112.87:8080/", timeout=1).text)
+    try:
+        sensors = json.loads(requests.get("http://158.49.112.87:8080/", timeout=1).text)
+    except Exception as e:
+        for id, s in subcribe.iteritems():
+            if s is True:
+                bot.send_message(id, "Error Servidor Api Caida")
+        print e
+        return
     for sensor in sensors:
         if sensor["id"] in [1, 2, 3, 4]:  # Procesar Sensores Jardin
-            data = json.loads(requests.get("http://158.49.112.87:8080/" + str(sensor["id"]), timeout=1).text)
+            try:
+                data = json.loads(requests.get("http://158.49.112.87:8080/" + str(sensor["id"]), timeout=1).text)
+            except Exception as e:
+                for id, s in subcribe.iteritems():
+                    if s is True:
+                        bot.send_message(id, "Error Servidor Api Caida")
+                print e
+                return
             processDataAndSendGraphics(data, message)
         else:  # Procesar AEMET
             pass
