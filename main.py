@@ -214,7 +214,8 @@ def theSystemHasErrors():
         sensors = json.loads(requests.get("http://158.49.112.87:8080/", timeout=1).text)
     except Exception as e:
         for id, s in subcribe.iteritems():
-            bot.send_message(id, "Error Servidor Api Caida")
+            if s is True:
+                bot.send_message(id, "Error Servidor Api Caida")
         print e
         return
     for sensor in sensors:
@@ -229,7 +230,8 @@ def theSystemHasErrors():
             now = datetime.now()
             if now + timedelta(minutes = -15)>last_date:
                 for id, s in subcribe.iteritems():
-                    bot.send_message(id, "Error en el sensor: " + str(data[0]['id']))
+                    if s is True:
+                        bot.send_message(id, "Error en el sensor: " + str(data[0]['id']))
         else:  # Procesar AEMET
             pass
 
