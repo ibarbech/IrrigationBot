@@ -1,12 +1,13 @@
 [[source]]
+url = "https://pypi.python.org/simple"
+verify_ssl = true
+name = "pypi"
 
+[dev-packages]
+telebot = "*"
+requests = "*"
 
 [packages]
 
-telebot = "*"
-requests = "*"
-os = "*"
-
 [requires]
-
-python_version = "3.6"
+python_version = "2.7"
