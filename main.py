@@ -9,7 +9,7 @@ import numpy as np
 from datetime import date, timedelta,datetime
 import matplotlib.pyplot as plt
 import threading
-import cPickle as pickle
+# import pickle
 import time
 
 # requests.get("http://159.49.112.87/")
@@ -41,12 +41,12 @@ for x in functions:
     init_text += "\n"+"\t"*4+x
 
 subcribe = {}
-try:
-	with open("idchats.txt", 'rb') as fichero:
-	    subcribe = pickle.load(fichero)
-except Exception as e:
-	with open("idchats.txt", 'wb') as fichero:
-		pickle.dump(subcribe, fichero,0)
+# try:
+# 	with open("idchats.txt", 'rb') as fichero:
+# 	    subcribe = pickle.load(fichero)
+# except Exception as e:
+# 	with open("idchats.txt", 'wb') as fichero:
+# 		pickle.dump(subcribe, fichero,0)
 
 Tipo2Text ={ "1": "Temperatura ambiente",
              "2": "Humedad ambiente",
@@ -150,8 +150,8 @@ def processData():
 def handle_start_help(message):
     subcribe[message.from_user.id] = True
     print subcribe
-    with open("idchats.txt", 'wb') as fichero:
-        pickle.dump(subcribe, fichero, 0)
+    # with open("idchats.txt", 'wb') as fichero:
+    #     pickle.dump(subcribe, fichero, 0)
     bot.reply_to(message, init_text)
 
 
@@ -193,14 +193,14 @@ def handle_start_help(message):
 @bot.message_handler(commands=['unsubcribe'])
 def handle_unsubcribe(message):
 	subcribe[message.from_user.id]=False
-	with open("idchats.txt", 'wb') as fichero:
-		pickle.dump(subcribe, fichero,0)
+	# with open("idchats.txt", 'wb') as fichero:
+	# 	pickle.dump(subcribe, fichero,0)
 
 @bot.message_handler(commands=['subcribe'])
 def handle_subcribe(message):
 	subcribe[message.from_user.id]=True
-	with open("idchats.txt", 'wb') as fichero:
-		pickle.dump(subcribe, fichero,0)
+	# with open("idchats.txt", 'wb') as fichero:
+	# 	pickle.dump(subcribe, fichero,0)
 
 @bot.message_handler(func=lambda message: True)
 def echo_all(message):
