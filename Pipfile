@@ -9,11 +9,10 @@ name = "pypi"
 [packages]
 telebot = "*"
 requests = "*"
-
 numpy = "*"
 datetime = "*"
 matplotlib = "*"
-
+tkinter = "*"
 
 [requires]
 python_version = "2.7"

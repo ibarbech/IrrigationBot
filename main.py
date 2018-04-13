@@ -7,7 +7,9 @@ import requests
 import json
 import numpy as np
 from datetime import date, timedelta,datetime
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as matplotlib.pyplot
+import matplotlib
+matplotlib.use('Agg')
 import threading
 # import pickle
 import time
@@ -109,12 +111,12 @@ def processDataAndSendGraphics(data, message):
             dictDays[d] = 0
     lists = sorted(dictDays.items())  # sorted by key, return a list of tuples
     x, y = zip(*lists)  # unpack a list of pairs into two tuples
-    plt.plot(x, y)
-    plt.title(str('Sensor : ' + str(data[0]['id'])))
-    # plt.show()
-    plt.xticks(rotation=90)
-    plt.savefig('/tmp/photo.png')
-    plt.close()
+    matplotlib.pyplot.plot(x, y)
+    matplotlib.pyplot.title(str('Sensor : ' + str(data[0]['id'])))
+    # matplotlib.pyplot.show()
+    matplotlib.pyplot.xticks(rotation=90)
+    matplotlib.pyplot.savefig('/tmp/photo.png')
+    matplotlib.pyplot.close()
     with open('/tmp/photo.png', 'rb') as photo:
         bot.send_photo(message.from_user.id, photo)
 
