@@ -7,9 +7,10 @@ import requests
 import json
 import numpy as np
 from datetime import date, timedelta,datetime
-# import matplotlib.pyplot as matplotlib.pyplot
 import matplotlib
 matplotlib.use('Agg')
+import matplotlib.pyplot as matplotlib.pyplot
+
 import threading
 # import pickle
 import time
