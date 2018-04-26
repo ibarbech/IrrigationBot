@@ -139,16 +139,16 @@ def processData():
         if sensor["id"] in [1, 2, 3, 4]:    # Procesar Sensores Jardin
             try:
                 data = json.loads(requests.get("http://158.49.112.87:8080/" + str(sensor["id"]), timeout=1).text)
+                for d in data:
+                    acum += d["valor"]
+                average[sensor["id"]] = acum / len(data)
+                lastValue[sensor["id"]] = data[-1]
             except Exception as e:
                 for id, s in subcribe.iteritems():
                     if s is True:
                         bot.send_message(id, "Error Servidor Api Caida")
                 print e
                 return
-            for d in data:
-                acum += d["valor"]
-            average[sensor["id"]] = acum/len(data)
-            lastValue[sensor["id"]] = data[-1]
         else:                            # Procesar AEMET
             pass
     text = ""
@@ -251,18 +251,24 @@ def theSystemHasErrors():
         return
     for sensor in sensors:
         if sensor["id"] in [1, 2, 3, 4]:  # Procesar Sensores Jardin
-            data = json.loads(requests.get("http://158.49.112.87:8080/" + str(sensor["id"]), timeout=1).text)
-            list_days=[]
-            for d in data:
-                f = d['fecha'].split(",")[1].replace(" GMT","")[1:]
-                d = datetime.strptime(f, "%d %b %Y %H:%M:%S")
-                list_days.append(d)
-            last_date = max(list_days)
-            now = datetime.now()
-            if now + timedelta(minutes = -15)>last_date:
+            try:
+                data = json.loads(requests.get("http://158.49.112.87:8080/" + str(sensor["id"]), timeout=1).text)
+                list_days=[]
+                for d in data:
+                    f = d['fecha'].split(",")[1].replace(" GMT","")[1:]
+                    d = datetime.strptime(f, "%d %b %Y %H:%M:%S")
+                    list_days.append(d)
+                last_date = max(list_days)
+                now = datetime.now()
+                if now + timedelta(minutes = -15)>last_date:
+                    for id, s in subcribe.iteritems():
+                        if s is True:
+                            bot.send_message(id, "Error en el sensor: " + str(data[0]['id']))
+            except Exception as e:
                 for id, s in subcribe.iteritems():
                     if s is True:
-                        bot.send_message(id, "Error en el sensor: " + str(data[0]['id']))
+                        bot.send_message(id, "Error Servidor Api Caida")
+                return
         else:  # Procesar AEMET
             pass
 
